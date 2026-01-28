@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type { ethers } from "ethers"
 import { connectWallet, getContract } from "@/lib/web3"
 
 export function useWallet() {
   const router = useRouter()
+  const hasAutoConnected = useRef(false)
   const [address, setAddress] = useState<string | null>(null)
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
   const [signer, setSigner] = useState<ethers.Signer | null>(null)
@@ -60,6 +61,10 @@ export function useWallet() {
   }
 
   useEffect(() => {
+    // Only auto-connect once on component mount
+    if (hasAutoConnected.current) return
+    hasAutoConnected.current = true
+
     const wasConnected = localStorage.getItem("walletConnected")
     if (wasConnected === "true" && typeof window.ethereum !== "undefined") {
       const autoConnect = async () => {
@@ -77,7 +82,6 @@ export function useWallet() {
         } catch (error) {
           console.error("[v0] Auto-connect failed:", error)
           localStorage.removeItem("walletConnected")
-        } finally {
           setIsConnecting(false)
         }
       }

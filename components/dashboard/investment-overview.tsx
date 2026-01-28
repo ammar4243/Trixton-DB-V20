@@ -76,13 +76,13 @@ export function InvestmentOverview() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="glass-card rounded-xl p-4 border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={16} className="text-primary" />
               <span className="text-sm font-medium">Total Invest</span>
             </div>
-            <p className="text-2xl font-bold text-primary neon-text">${totalInvestmentUSD}</p>
+            <p className="text-2xl font-bold text-primary neon-text">${totalInvestmentUSD.toFixed(2)}</p>
             <p className="text-sm text-muted-foreground">USDT invested</p>
           </div>
 
@@ -95,22 +95,13 @@ export function InvestmentOverview() {
             <p className="text-sm text-muted-foreground">@ ${tokenPrice}/TIN</p>
           </div>
 
-          <div className="glass-card rounded-xl p-4 border border-green-500/20">
+          <div className="glass-card rounded-xl p-4 border border-blue-500/20">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={16} className="text-green-500" />
-              <span className="text-sm font-medium">Total Available Withdraw</span>
+              <DollarSign size={16} className="text-blue-500" />
+              <span className="text-sm font-medium">Referral Reward</span>
             </div>
-            <p className="text-2xl font-bold text-green-500">${availableWithdraw.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-blue-500">${pendingReferralRewards.toFixed(2)}</p>
             <p className="text-sm text-muted-foreground">Available to claim</p>
-          </div>
-
-          <div className="glass-card rounded-xl p-4 border border-accent/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Users size={16} className="text-accent" />
-              <span className="text-sm font-medium">Total Referral Reward</span>
-            </div>
-            <p className="text-2xl font-bold text-accent">${pendingReferralRewards.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">From {totalReferrals} referrals</p>
           </div>
         </div>
 
