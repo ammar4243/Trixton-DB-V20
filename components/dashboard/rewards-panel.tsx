@@ -53,6 +53,7 @@ export function RewardsPanel() {
   }
 
   const referralReward = userStats?.referralReward || 0
+  const dailyReward = userStats?.dailyReward || 0
 
   return (
     <Card className="glass-card border border-accent/30 hover:border-accent/50 transition-all">
@@ -65,6 +66,22 @@ export function RewardsPanel() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Daily Reward */}
+        <div className="glass-card rounded-xl p-4 border border-blue-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-sm text-muted-foreground">Claimable Daily Reward</div>
+              <div className="text-2xl font-bold text-blue-500">
+                ${dailyReward.toFixed(2)} USDT
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                From your investment returns
+              </p>
+            </div>
+            <Award className="text-blue-500" size={32} />
+          </div>
+        </div>
+
         {/* Referral Reward */}
         <div className="glass-card rounded-xl p-4 border border-purple-500/20">
           <div className="flex items-center justify-between mb-3">

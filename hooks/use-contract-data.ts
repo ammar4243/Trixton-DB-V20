@@ -72,6 +72,8 @@ export function useContractData() {
   const [loading, setLoading] = useState(false)
   const [gcmBalance, setGcmBalance] = useState<number>(0); // Declare gcmBalance variable
   const [dailyReward, setDailyReward] = useState<number>(0); // Declare dailyReward variable
+  const [hasInvested, setHasInvested] = useState<boolean>(false); // Declare hasInvested variable
+  const [referralReward, setReferralReward] = useState<number>(0); // Declare referralReward variable
 
   const fetchContractData = useCallback(async () => {
     if (!isConnected || !contract || !address) {
@@ -133,32 +135,52 @@ export function useContractData() {
         globalPool,
       })
 
-      // Fetch user investment status
-      let hasInvested = false
+      // Fetch total investment from smart contract
       let totalInvestment = 0
+      try {
+        const invested = await contract.totalInvested(address)
+        totalInvestment = Number(ethers.formatUnits(invested, 6)) // USDT has 6 decimals
+        console.log("[v0] totalInvestment from contract:", totalInvestment)
+        setHasInvested(totalInvestment > 0); // Set hasInvested based on totalInvestment
+      } catch (error) {
+        console.log("[v0] Error fetching totalInvestment:", error)
+      }
+
+      // Fetch available TIN tokens from smart contract
       let tinBalance = 0
       try {
-        hasInvested = await contract.hasInvested(address)
-        console.log("[v0] hasInvested:", hasInvested)
-        
-        // Fetch total invested regardless of hasInvested flag
-        const invested = await contract.totalInvested(address)
-        totalInvestment = Number(ethers.formatUnits(invested, 6))
-        console.log("[v0] totalInvestment:", totalInvestment)
-        
         const tokens = await contract.tokenRewards(address)
+        // TIN tokens use 18 decimals
         tinBalance = Number(ethers.formatEther(tokens))
-        console.log("[v0] tinBalance:", tinBalance)
+        console.log("[v0] tinBalance (TIN tokens) from contract:", tinBalance)
       } catch (error) {
-        console.log("[v0] Error fetching investment status:", error)
+        console.log("[v0] Error fetching tinBalance:", error)
+      }
+
+      // Fetch claimable daily reward from smart contract
+      let dailyRewardAmount = 0
+      try {
+        const daily = await contract.getClaimableDaily(address)
+        dailyRewardAmount = Number(ethers.formatUnits(daily, 6)) // USDT has 6 decimals
+        console.log("[v0] dailyReward from contract:", dailyRewardAmount)
+      } catch (error) {
+        console.log("[v0] Error fetching daily reward:", error)
       }
 
       // Fetch user level
       let userLevel = 0
+      let hasInvested = false
       try {
-        const level = await contract.getUserLevel(address)
+        hasInvested = await contract.hasInvested(address)
+        console.log("[v0] hasInvested:", hasInvested)
+      } catch (error) {
+        console.log("[v0] Error fetching hasInvested:", error)
+      }
+
+      try {
+        const level = await contract.referralCount(address)
         userLevel = Number(level)
-        console.log("[v0] userLevel:", userLevel)
+        console.log("[v0] userLevel (from referralCount):", userLevel)
       } catch (error) {
         console.log("[v0] Error fetching user level:", error)
       }
@@ -176,32 +198,14 @@ export function useContractData() {
         console.log("[v0] Error fetching referral data:", error)
       }
 
-      // Fetch referral reward (pending referral rewards)
-      let referralReward = 0
-      try {
-        const referral = await contract.pendingReferralRewards(address)
-        referralReward = Number(ethers.formatUnits(referral, 6))
-        console.log("[v0] referralReward:", referralReward)
-      } catch (error) {
-        console.log("[v0] Error fetching referral reward:", error)
-      }
-
       // Fetch global pool reward
       let globalPoolReward = 0
       try {
         const reward = await contract.getPendingGlobalPoolReward(address)
         globalPoolReward = Number(ethers.formatUnits(reward, 6))
+        console.log("[v0] globalPoolReward:", globalPoolReward)
       } catch (error) {
-        console.log("Error fetching global pool reward:", error)
-      }
-
-      // Fetch daily reward
-      let fetchedDailyReward = 0
-      try {
-        const reward = await contract.getDailyReward(address)
-        fetchedDailyReward = Number(ethers.formatUnits(reward, 6))
-      } catch (error) {
-        console.log("Error fetching daily reward:", error)
+        console.log("[v0] Error fetching global pool reward:", error)
       }
 
       // Fetch level reward statuses
@@ -235,8 +239,8 @@ export function useContractData() {
         pendingReferralRewards: pendingRewards,
         globalPoolReward,
         hasInvested,
-        dailyReward: 0,
-        referralReward,
+        dailyReward: dailyRewardAmount,
+        referralReward: pendingRewards,
       })
 
       setReferralData({
@@ -330,5 +334,6 @@ export function useContractData() {
     packages: [{ id: 1, price: 100, tokens: 1000, label: "Standard Package" }],
     gcmBalance, // Include gcmBalance in return object
     dailyReward, // Include dailyReward in return object
+    referralReward, // Include referralReward in return object
   }
 }
