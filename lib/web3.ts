@@ -119,3 +119,14 @@ export function getUsdtContract(signerOrProvider: ethers.Signer | ethers.Provide
 export function getAirdropContract(signerOrProvider: ethers.Signer | ethers.Provider) {
   return new ethers.Contract(AIRDROP_CONTRACT_ADDRESS, AIRDROP_CONTRACT_ABI, signerOrProvider)
 }
+
+export function getTinTokenContract(signerOrProvider: ethers.Signer | ethers.Provider) {
+  const TIN_ABI = [
+    "function balanceOf(address account) external view returns (uint256)",
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function transfer(address to, uint256 amount) external returns (bool)"
+  ]
+  // TIN token address from the contract
+  const TIN_ADDRESS = "0xc1537fea4be5ff08c4b15d5a8bb5ddb5b08fce46" // Example TIN token address
+  return new ethers.Contract(TIN_ADDRESS, TIN_ABI, signerOrProvider)
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useWallet } from "./use-wallet"
 import { ethers } from "ethers"
+import { getTinTokenContract } from "@/lib/web3"
 
 // Level achievement thresholds (direct referrals needed)
 export const LEVEL_THRESHOLDS = [
@@ -140,13 +141,37 @@ export function useContractData() {
       let dailyRewardAmount = 0
       let tinBalance = 0
       
-      // Since getPlanDetails is throwing errors, use default values for now
-      // and display the working referral reward data
-      totalInvestment = 100 // Default investment amount
-      tinBalance = 1000 // Default TIN tokens
-      dailyRewardAmount = 0 // Will be updated from referral rewards display
-      
-      console.log("[v0] Using default values - Investment: 100, TIN: 1000, Daily: 0")
+      // Fetch TIN token balance from user's wallet
+      if (signer) {
+        try {
+          const tinTokenContract = getTinTokenContract(signer)
+          const balance = await tinTokenContract.balanceOf(address)
+          tinBalance = Number(ethers.formatEther(balance)) // TIN tokens use 18 decimals
+          console.log("[v0] TIN token balance from wallet:", tinBalance)
+        } catch (error) {
+          console.log("[v0] Error fetching TIN balance from wallet:", error)
+        }
+      }
+
+      // Fetch claimable daily reward from smart contract
+      try {
+        const daily = await contract.getClaimableDaily(address)
+        dailyRewardAmount = Number(ethers.formatUnits(daily, 6)) // USDT has 6 decimals
+        console.log("[v0] Claimable daily reward:", dailyRewardAmount)
+      } catch (error) {
+        console.log("[v0] Error fetching daily reward from contract:", error)
+        dailyRewardAmount = 0
+      }
+
+      // Fetch total investment - try getPlanDetails with planId 0
+      try {
+        const planDetails = await contract.getPlanDetails(address, 0)
+        totalInvestment = Number(ethers.formatUnits(planDetails.investmentAmount, 6))
+        console.log("[v0] Total investment from contract:", totalInvestment)
+      } catch (error) {
+        console.log("[v0] Error fetching total investment:", error)
+        totalInvestment = 0
+      }
 
       // Fetch user level
       let userLevel = 0
