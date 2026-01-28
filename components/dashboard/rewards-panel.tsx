@@ -72,6 +72,8 @@ export function RewardsPanel() {
 
   const currentLevel = userStats?.userLevel || 0
   const globalPoolReward = userStats?.globalPoolReward || 0
+  const dailyReward = userStats?.dailyReward || 0
+  const referralReward = userStats?.referralReward || 0
 
   // Find next claimable level reward
   const nextClaimableLevelReward = levelRewards.find(lr => lr.achieved && !lr.claimed)
@@ -101,6 +103,34 @@ export function RewardsPanel() {
               ? `${10 - currentLevel} more referrals to reach Handshake level`
               : "Maximum level achieved!"
             }
+          </p>
+        </div>
+
+        {/* Daily Reward */}
+        <div className="glass-card rounded-xl p-4 border border-blue-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Daily Reward</span>
+            <Award className="text-blue-500" size={20} />
+          </div>
+          <div className="text-2xl font-bold text-blue-500">
+            ${dailyReward.toFixed(2)} USDT
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Claimable from your investment returns
+          </p>
+        </div>
+
+        {/* Referral Reward */}
+        <div className="glass-card rounded-xl p-4 border border-purple-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Referral Reward</span>
+            <Award className="text-purple-500" size={20} />
+          </div>
+          <div className="text-2xl font-bold text-purple-500">
+            ${referralReward.toFixed(2)} USDT
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Earned from your referrals
           </p>
         </div>
 
