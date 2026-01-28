@@ -71,6 +71,7 @@ export function useContractData() {
   const [levelRewards, setLevelRewards] = useState<LevelRewardStatus[]>([])
   const [loading, setLoading] = useState(false)
   const [gcmBalance, setGcmBalance] = useState<number>(0); // Declare gcmBalance variable
+  const [dailyReward, setDailyReward] = useState<number>(0); // Declare dailyReward variable
 
   const fetchContractData = useCallback(async () => {
     if (!isConnected || !contract || !address) {
@@ -167,25 +168,12 @@ export function useContractData() {
       let referralCount = 0
       let pendingRewards = 0
       try {
-        directReferrals = await contract.getDirectReferrals(address)
-        referralCount = directReferrals.length
-        console.log("[v0] directReferrals:", directReferrals.length)
-        
+        // Only fetch pending referral rewards - skip getDirectReferrals
         const pending = await contract.pendingReferralRewards(address)
         pendingRewards = Number(ethers.formatUnits(pending, 6))
-        console.log("[v0] pendingReferralRewards:", pendingRewards)
+        console.log("[v0] referralReward:", pendingRewards)
       } catch (error) {
         console.log("[v0] Error fetching referral data:", error)
-      }
-
-      // Fetch daily reward
-      let dailyReward = 0
-      try {
-        const daily = await contract.getClaimableDaily(address)
-        dailyReward = Number(ethers.formatUnits(daily, 6))
-        console.log("[v0] dailyReward:", dailyReward)
-      } catch (error) {
-        console.log("[v0] Error fetching daily reward:", error)
       }
 
       // Fetch referral reward (pending referral rewards)
@@ -205,6 +193,15 @@ export function useContractData() {
         globalPoolReward = Number(ethers.formatUnits(reward, 6))
       } catch (error) {
         console.log("Error fetching global pool reward:", error)
+      }
+
+      // Fetch daily reward
+      let fetchedDailyReward = 0
+      try {
+        const reward = await contract.getDailyReward(address)
+        fetchedDailyReward = Number(ethers.formatUnits(reward, 6))
+      } catch (error) {
+        console.log("Error fetching daily reward:", error)
       }
 
       // Fetch level reward statuses
@@ -233,13 +230,20 @@ export function useContractData() {
         totalInvestment,
         tinBalance,
         userLevel,
-        totalReferrals: referralCount,
+        totalReferrals: 0,
         referralEarnings: pendingRewards,
         pendingReferralRewards: pendingRewards,
         globalPoolReward,
         hasInvested,
-        dailyReward,
+        dailyReward: 0,
         referralReward,
+      })
+
+      setReferralData({
+        directReferrals: [],
+        totalReferrals: 0,
+        pendingRewards,
+        referralCount: 0,
       })
 
       setReferralData({
@@ -325,5 +329,6 @@ export function useContractData() {
     claimGlobalPoolReward,
     packages: [{ id: 1, price: 100, tokens: 1000, label: "Standard Package" }],
     gcmBalance, // Include gcmBalance in return object
+    dailyReward, // Include dailyReward in return object
   }
 }

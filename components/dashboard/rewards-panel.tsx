@@ -3,49 +3,31 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Award, Globe, CheckCircle, AlertCircle, Trophy } from "lucide-react"
-import { useContractData, LEVEL_REWARDS } from "@/hooks/use-contract-data"
+import { Award, CheckCircle, AlertCircle } from "lucide-react"
+import { useContractData } from "@/hooks/use-contract-data"
 import { useWallet } from "@/hooks/use-wallet"
 
 export function RewardsPanel() {
-  const [isClaimingLevel, setIsClaimingLevel] = useState<number | null>(null)
-  const [isClaimingGlobal, setIsClaimingGlobal] = useState(false)
+  const [isClaimingReferral, setIsClaimingReferral] = useState(false)
   const [status, setStatus] = useState<{ type: "success" | "error" | "idle"; message: string }>({ type: "idle", message: "" })
   
-  const { userStats, levelRewards, loading, claimLevelReward, claimGlobalPoolReward } = useContractData()
+  const { userStats, loading, claimReferralRewards } = useContractData()
   const { address } = useWallet()
 
-  const handleClaimLevelReward = async (level: number) => {
-    if (!address || !claimLevelReward) return
+  const handleClaimReferralReward = async () => {
+    if (!address || !claimReferralRewards) return
 
-    setIsClaimingLevel(level)
+    setIsClaimingReferral(true)
     setStatus({ type: "idle", message: "" })
 
     try {
-      await claimLevelReward(level)
-      setStatus({ type: "success", message: `Level ${level} reward claimed successfully!` })
+      await claimReferralRewards()
+      setStatus({ type: "success", message: "Referral reward claimed successfully!" })
     } catch (error) {
-      console.error("Failed to claim level reward:", error)
+      console.error("Failed to claim referral reward:", error)
       setStatus({ type: "error", message: error instanceof Error ? error.message : "Failed to claim reward" })
     } finally {
-      setIsClaimingLevel(null)
-    }
-  }
-
-  const handleClaimGlobalPool = async () => {
-    if (!address || !claimGlobalPoolReward) return
-
-    setIsClaimingGlobal(true)
-    setStatus({ type: "idle", message: "" })
-
-    try {
-      await claimGlobalPoolReward()
-      setStatus({ type: "success", message: "Global pool reward claimed successfully!" })
-    } catch (error) {
-      console.error("Failed to claim global pool reward:", error)
-      setStatus({ type: "error", message: error instanceof Error ? error.message : "Failed to claim reward" })
-    } finally {
-      setIsClaimingGlobal(false)
+      setIsClaimingReferral(false)
     }
   }
 
@@ -70,13 +52,7 @@ export function RewardsPanel() {
     )
   }
 
-  const currentLevel = userStats?.userLevel || 0
-  const globalPoolReward = userStats?.globalPoolReward || 0
-  const dailyReward = userStats?.dailyReward || 0
   const referralReward = userStats?.referralReward || 0
-
-  // Find next claimable level reward
-  const nextClaimableLevelReward = levelRewards.find(lr => lr.achieved && !lr.claimed)
 
   return (
     <Card className="glass-card border border-accent/30 hover:border-accent/50 transition-all">
@@ -89,108 +65,34 @@ export function RewardsPanel() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Current Level */}
-        <div className="glass-card rounded-xl p-4 border border-primary/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Your Level</span>
-            <Trophy className="text-primary" size={20} />
-          </div>
-          <div className="text-3xl font-bold text-primary">
-            {currentLevel >= 10 ? "Handshake" : `Level ${currentLevel}`}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {currentLevel < 10 
-              ? `${10 - currentLevel} more referrals to reach Handshake level`
-              : "Maximum level achieved!"
-            }
-          </p>
-        </div>
-
-        {/* Daily Reward */}
-        <div className="glass-card rounded-xl p-4 border border-blue-500/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Daily Reward</span>
-            <Award className="text-blue-500" size={20} />
-          </div>
-          <div className="text-2xl font-bold text-blue-500">
-            ${dailyReward.toFixed(2)} USDT
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Claimable from your investment returns
-          </p>
-        </div>
-
         {/* Referral Reward */}
         <div className="glass-card rounded-xl p-4 border border-purple-500/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Referral Reward</span>
-            <Award className="text-purple-500" size={20} />
-          </div>
-          <div className="text-2xl font-bold text-purple-500">
-            ${referralReward.toFixed(2)} USDT
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Earned from your referrals
-          </p>
-        </div>
-
-        {/* Level Reward Claim */}
-        {nextClaimableLevelReward && (
-          <div className="glass-card rounded-xl p-4 border border-secondary/20">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-sm text-muted-foreground">Level Reward Available</div>
-                <div className="text-xl font-bold text-secondary">
-                  ${nextClaimableLevelReward.reward} USDT
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Level {nextClaimableLevelReward.level} Achievement
-                </div>
-              </div>
-              <Award className="text-secondary" size={32} />
-            </div>
-            <Button
-              className="w-full bg-secondary/20 hover:bg-secondary/30 text-secondary border border-secondary/50 py-5 rounded-xl"
-              onClick={() => handleClaimLevelReward(nextClaimableLevelReward.level)}
-              disabled={isClaimingLevel !== null}
-            >
-              {isClaimingLevel === nextClaimableLevelReward.level ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
-                  Claiming...
-                </span>
-              ) : (
-                `Claim $${nextClaimableLevelReward.reward} Reward`
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Global Pool Reward */}
-        <div className="glass-card rounded-xl p-4 border border-accent/20">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <div className="text-sm text-muted-foreground">Global Pool Reward</div>
-              <div className="text-xl font-bold text-accent">
-                ${globalPoolReward.toFixed(2)} USDT
+              <div className="text-sm text-muted-foreground">Referral Reward</div>
+              <div className="text-2xl font-bold text-purple-500">
+                ${referralReward.toFixed(2)} USDT
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Earned from your referrals
+              </p>
             </div>
-            <Globe className="text-accent" size={32} />
+            <Award className="text-purple-500" size={32} />
           </div>
           <Button
-            className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent/50 py-5 rounded-xl"
-            onClick={handleClaimGlobalPool}
-            disabled={globalPoolReward <= 0 || isClaimingGlobal}
+            className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 border border-purple-500/50 py-5 rounded-xl"
+            onClick={handleClaimReferralReward}
+            disabled={referralReward <= 0 || isClaimingReferral}
           >
-            {isClaimingGlobal ? (
+            {isClaimingReferral ? (
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
                 Claiming...
               </span>
-            ) : globalPoolReward <= 0 ? (
-              "No Global Pool Reward"
+            ) : referralReward <= 0 ? (
+              "No Referral Rewards"
             ) : (
-              `Claim $${globalPoolReward.toFixed(2)} from Global Pool`
+              `Claim $${referralReward.toFixed(2)} Reward`
             )}
           </Button>
         </div>
@@ -212,12 +114,6 @@ export function RewardsPanel() {
             <span className="text-sm">{status.message}</span>
           </div>
         )}
-
-        {/* Info */}
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>* Level rewards unlock based on referral count</p>
-          <p>* Global pool rewards are shared among eligible members</p>
-        </div>
       </CardContent>
     </Card>
   )
