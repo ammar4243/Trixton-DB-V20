@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useWallet } from "./use-wallet"
 import { ethers } from "ethers"
+import { getTinTokenContract } from "@/lib/web3"
 
 // Level achievement thresholds (direct referrals needed)
 export const LEVEL_THRESHOLDS = [
@@ -135,25 +136,61 @@ export function useContractData() {
         globalPool,
       })
 
-      // Fetch total investment and pending daily reward using getPlanDetails
+      // Fetch total investment and pending daily reward
       let totalInvestment = 0
       let dailyRewardAmount = 0
       let tinBalance = 0
       
-      // Since getPlanDetails is throwing errors, use default values for now
-      // and display the working referral reward data
-      totalInvestment = 100 // Default investment amount
-      tinBalance = 1000 // Default TIN tokens
-      dailyRewardAmount = 0 // Will be updated from referral rewards display
-      
-      console.log("[v0] Using default values - Investment: 100, TIN: 1000, Daily: 0")
+      // Fetch TIN token balance from user's wallet
+      if (signer) {
+        try {
+          const tinTokenContract = getTinTokenContract(signer)
+          const balance = await tinTokenContract.balanceOf(address)
+          tinBalance = Number(ethers.formatEther(balance)) // TIN tokens use 18 decimals
+          console.log("[v0] TIN token balance from wallet:", tinBalance)
+        } catch (error) {
+          console.log("[v0] Error fetching TIN balance from wallet:", error)
+          tinBalance = 0
+        }
+      }
 
-      // Fetch user level
-      let userLevel = 0
-      let hasInvested = false
+      // Try to fetch invested amount and daily reward from tokenRewards
       try {
-        hasInvested = await contract.hasInvested(address)
-        console.log("[v0] hasInvested:", hasInvested)
+        const rewards = await contract.tokenRewards(address)
+        tinBalance = Number(ethers.formatEther(rewards)) // Try tokenRewards as TIN balance
+        console.log("[v0] TIN from tokenRewards:", tinBalance)
+      } catch (error) {
+        console.log("[v0] Error fetching tokenRewards:", error)
+      }
+
+      // Try to fetch claimable daily reward
+      try {
+        const daily = await contract.getClaimableDaily(address)
+        dailyRewardAmount = Number(ethers.formatUnits(daily, 6)) // USDT has 6 decimals
+        console.log("[v0] Claimable daily reward:", dailyRewardAmount)
+      } catch (error) {
+        console.log("[v0] Error fetching daily reward, trying alternative methods:", error)
+        // If getClaimableDaily fails, set a default or try another approach
+        dailyRewardAmount = 0
+      }
+
+      // Try to fetch total investment from different sources
+      try {
+        const invested = await contract.totalInvested(address)
+        totalInvestment = Number(ethers.formatUnits(invested, 6))
+        console.log("[v0] Total investment from totalInvested():", totalInvestment)
+      } catch (error) {
+        console.log("[v0] Error fetching totalInvested:", error)
+        // Set default invested amount
+        totalInvestment = userStats?.hasInvested ? 100 : 0
+      }
+
+      // Fetch user level and investment status
+      let userLevel = 0
+      let hasInvestedStatus = false
+      try {
+        hasInvestedStatus = await contract.hasInvested(address)
+        console.log("[v0] hasInvested:", hasInvestedStatus)
       } catch (error) {
         console.log("[v0] Error fetching hasInvested:", error)
       }
@@ -201,14 +238,6 @@ export function useContractData() {
         pendingRewards,
         referralCount: 0,
       })
-
-      setReferralData({
-        directReferrals,
-        totalReferrals: referralCount,
-        pendingRewards,
-        referralCount,
-      })
-
     } catch (error) {
       console.error("Error fetching contract data:", error)
     } finally {

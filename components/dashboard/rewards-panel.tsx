@@ -9,10 +9,11 @@ import { useWallet } from "@/hooks/use-wallet"
 
 export function RewardsPanel() {
   const [isClaimingReferral, setIsClaimingReferral] = useState(false)
+  const [isClaimingDaily, setIsClaimingDaily] = useState(false)
   const [status, setStatus] = useState<{ type: "success" | "error" | "idle"; message: string }>({ type: "idle", message: "" })
   
   const { userStats, loading, claimReferralRewards } = useContractData()
-  const { address } = useWallet()
+  const { address, contract } = useWallet()
 
   const handleClaimReferralReward = async () => {
     if (!address || !claimReferralRewards) return
@@ -28,6 +29,24 @@ export function RewardsPanel() {
       setStatus({ type: "error", message: error instanceof Error ? error.message : "Failed to claim reward" })
     } finally {
       setIsClaimingReferral(false)
+    }
+  }
+
+  const handleClaimDailyReward = async () => {
+    if (!address || !contract) return
+
+    setIsClaimingDaily(true)
+    setStatus({ type: "idle", message: "" })
+
+    try {
+      const tx = await contract.claimDailyReward()
+      await tx.wait()
+      setStatus({ type: "success", message: "Daily reward claimed successfully!" })
+    } catch (error) {
+      console.error("Failed to claim daily reward:", error)
+      setStatus({ type: "error", message: error instanceof Error ? error.message : "Failed to claim reward" })
+    } finally {
+      setIsClaimingDaily(false)
     }
   }
 
@@ -80,6 +99,22 @@ export function RewardsPanel() {
             </div>
             <Award className="text-blue-500" size={32} />
           </div>
+          <Button
+            className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-500 border border-blue-500/50 py-5 rounded-xl"
+            onClick={handleClaimDailyReward}
+            disabled={dailyReward <= 0 || isClaimingDaily}
+          >
+            {isClaimingDaily ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                Claiming...
+              </span>
+            ) : dailyReward <= 0 ? (
+              "No Daily Rewards"
+            ) : (
+              `Claim $${dailyReward.toFixed(2)} Reward`
+            )}
+          </Button>
         </div>
 
         {/* Referral Reward */}
