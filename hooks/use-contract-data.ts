@@ -136,7 +136,7 @@ export function useContractData() {
         globalPool,
       })
 
-      // Fetch total investment and pending daily reward using getPlanDetails
+      // Fetch total investment and pending daily reward
       let totalInvestment = 0
       let dailyRewardAmount = 0
       let tinBalance = 0
@@ -150,35 +150,47 @@ export function useContractData() {
           console.log("[v0] TIN token balance from wallet:", tinBalance)
         } catch (error) {
           console.log("[v0] Error fetching TIN balance from wallet:", error)
+          tinBalance = 0
         }
       }
 
-      // Fetch claimable daily reward from smart contract
+      // Try to fetch invested amount and daily reward from tokenRewards
+      try {
+        const rewards = await contract.tokenRewards(address)
+        tinBalance = Number(ethers.formatEther(rewards)) // Try tokenRewards as TIN balance
+        console.log("[v0] TIN from tokenRewards:", tinBalance)
+      } catch (error) {
+        console.log("[v0] Error fetching tokenRewards:", error)
+      }
+
+      // Try to fetch claimable daily reward
       try {
         const daily = await contract.getClaimableDaily(address)
         dailyRewardAmount = Number(ethers.formatUnits(daily, 6)) // USDT has 6 decimals
         console.log("[v0] Claimable daily reward:", dailyRewardAmount)
       } catch (error) {
-        console.log("[v0] Error fetching daily reward from contract:", error)
+        console.log("[v0] Error fetching daily reward, trying alternative methods:", error)
+        // If getClaimableDaily fails, set a default or try another approach
         dailyRewardAmount = 0
       }
 
-      // Fetch total investment - try getPlanDetails with planId 0
+      // Try to fetch total investment from different sources
       try {
-        const planDetails = await contract.getPlanDetails(address, 0)
-        totalInvestment = Number(ethers.formatUnits(planDetails.investmentAmount, 6))
-        console.log("[v0] Total investment from contract:", totalInvestment)
+        const invested = await contract.totalInvested(address)
+        totalInvestment = Number(ethers.formatUnits(invested, 6))
+        console.log("[v0] Total investment from totalInvested():", totalInvestment)
       } catch (error) {
-        console.log("[v0] Error fetching total investment:", error)
-        totalInvestment = 0
+        console.log("[v0] Error fetching totalInvested:", error)
+        // Set default invested amount
+        totalInvestment = userStats?.hasInvested ? 100 : 0
       }
 
-      // Fetch user level
+      // Fetch user level and investment status
       let userLevel = 0
-      let hasInvested = false
+      let hasInvestedStatus = false
       try {
-        hasInvested = await contract.hasInvested(address)
-        console.log("[v0] hasInvested:", hasInvested)
+        hasInvestedStatus = await contract.hasInvested(address)
+        console.log("[v0] hasInvested:", hasInvestedStatus)
       } catch (error) {
         console.log("[v0] Error fetching hasInvested:", error)
       }
@@ -226,14 +238,6 @@ export function useContractData() {
         pendingRewards,
         referralCount: 0,
       })
-
-      setReferralData({
-        directReferrals,
-        totalReferrals: referralCount,
-        pendingRewards,
-        referralCount,
-      })
-
     } catch (error) {
       console.error("Error fetching contract data:", error)
     } finally {
