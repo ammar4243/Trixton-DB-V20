@@ -39,6 +39,8 @@ interface UserStats {
   pendingReferralRewards: number
   globalPoolReward: number
   hasInvested: boolean
+  dailyReward: number
+  referralReward: number
 }
 
 interface ReferralData {
@@ -81,6 +83,8 @@ export function useContractData() {
         pendingReferralRewards: 0,
         globalPoolReward: 0,
         hasInvested: false,
+        dailyReward: 0,
+        referralReward: 0,
       })
       setReferralData({
         directReferrals: [],
@@ -174,6 +178,26 @@ export function useContractData() {
         console.log("[v0] Error fetching referral data:", error)
       }
 
+      // Fetch daily reward
+      let dailyReward = 0
+      try {
+        const daily = await contract.getClaimableDaily(address)
+        dailyReward = Number(ethers.formatUnits(daily, 6))
+        console.log("[v0] dailyReward:", dailyReward)
+      } catch (error) {
+        console.log("[v0] Error fetching daily reward:", error)
+      }
+
+      // Fetch referral reward (pending referral rewards)
+      let referralReward = 0
+      try {
+        const referral = await contract.pendingReferralRewards(address)
+        referralReward = Number(ethers.formatUnits(referral, 6))
+        console.log("[v0] referralReward:", referralReward)
+      } catch (error) {
+        console.log("[v0] Error fetching referral reward:", error)
+      }
+
       // Fetch global pool reward
       let globalPoolReward = 0
       try {
@@ -214,6 +238,8 @@ export function useContractData() {
         pendingReferralRewards: pendingRewards,
         globalPoolReward,
         hasInvested,
+        dailyReward,
+        referralReward,
       })
 
       setReferralData({

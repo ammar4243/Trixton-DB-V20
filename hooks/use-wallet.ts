@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import type { ethers } from "ethers"
 import { connectWallet, getContract } from "@/lib/web3"
 
 export function useWallet() {
+  const router = useRouter()
   const [address, setAddress] = useState<string | null>(null)
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
   const [signer, setSigner] = useState<ethers.Signer | null>(null)
@@ -17,14 +19,13 @@ export function useWallet() {
     setIsConnecting(true)
     setIsReady(false)
     setError(null)
-    
-    // Check if MetaMask or other wallet is available
+
     if (typeof window.ethereum === "undefined") {
       setError("Please install MetaMask to connect your wallet")
       setIsConnecting(false)
       return
     }
-    
+
     try {
       const { provider, signer, address } = await connectWallet()
 
@@ -37,9 +38,8 @@ export function useWallet() {
 
       localStorage.setItem("walletConnected", "true")
       setIsReady(true)
-      
-      // Redirect to dashboard after successful connection
-      window.location.href = "/dashboard"
+
+      router.push("/dashboard")
     } catch (error) {
       console.error("Failed to connect wallet:", error)
       setError("Failed to connect wallet. Please try again.")
@@ -62,10 +62,11 @@ export function useWallet() {
   useEffect(() => {
     const wasConnected = localStorage.getItem("walletConnected")
     if (wasConnected === "true" && typeof window.ethereum !== "undefined") {
-      // Auto-reconnect without redirect
       const autoConnect = async () => {
         setIsConnecting(true)
         try {
+          // Small delay to ensure MetaMask is ready
+          await new Promise(resolve => setTimeout(resolve, 500))
           const { provider, signer, address } = await connectWallet()
           setProvider(provider)
           setSigner(signer)
@@ -74,7 +75,7 @@ export function useWallet() {
           setContract(contractInstance)
           setIsReady(true)
         } catch (error) {
-          console.error("Auto-connect failed:", error)
+          console.error("[v0] Auto-connect failed:", error)
           localStorage.removeItem("walletConnected")
         } finally {
           setIsConnecting(false)
