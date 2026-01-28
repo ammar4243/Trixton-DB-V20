@@ -28,7 +28,8 @@ export const CONTRACT_ABI = [
   { inputs: [{ internalType: "address", name: "", type: "address" }], name: "referralCount", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "uint256", name: "", type: "uint256" }], name: "referralRates", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "", type: "address" }], name: "totalInvested", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [{ internalType: "address", name: "", type: "address" }], name: "tokenRewards", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" }
+  { inputs: [{ internalType: "address", name: "", type: "address" }], name: "tokenRewards", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "user", type: "address" }, { internalType: "uint256", name: "planId", type: "uint256" }], name: "getPlanDetails", outputs: [{ internalType: "uint256", name: "investmentAmount", type: "uint256" }, { internalType: "uint256", name: "pendingDailyReward", type: "uint256" }, { internalType: "uint256", name: "tinTokens", type: "uint256" }, { internalType: "uint256", name: "investmentDate", type: "uint256" }], stateMutability: "view", type: "function" }
 ]
 
 export const USDT_ADDRESS = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"

@@ -135,36 +135,43 @@ export function useContractData() {
         globalPool,
       })
 
-      // Fetch total investment from smart contract
+      // Fetch total investment and pending daily reward using getPlanDetails
       let totalInvestment = 0
-      try {
-        const invested = await contract.totalInvested(address)
-        totalInvestment = Number(ethers.formatUnits(invested, 6)) // USDT has 6 decimals
-        console.log("[v0] totalInvestment from contract:", totalInvestment)
-        setHasInvested(totalInvestment > 0); // Set hasInvested based on totalInvestment
-      } catch (error) {
-        console.log("[v0] Error fetching totalInvestment:", error)
-      }
-
-      // Fetch available TIN tokens from smart contract
+      let dailyRewardAmount = 0
       let tinBalance = 0
       try {
-        const tokens = await contract.tokenRewards(address)
-        // TIN tokens use 18 decimals
-        tinBalance = Number(ethers.formatEther(tokens))
-        console.log("[v0] tinBalance (TIN tokens) from contract:", tinBalance)
+        // Try to fetch plan details for planId 0 (first investment plan)
+        const planDetails = await contract.getPlanDetails(address, 0)
+        totalInvestment = Number(ethers.formatUnits(planDetails.investmentAmount, 6)) // USDT has 6 decimals
+        dailyRewardAmount = Number(ethers.formatUnits(planDetails.pendingDailyReward, 6)) // USDT has 6 decimals
+        tinBalance = Number(ethers.formatEther(planDetails.tinTokens)) // TIN tokens use 18 decimals
+        console.log("[v0] getPlanDetails - Investment:", totalInvestment, "Daily Reward:", dailyRewardAmount, "TIN:", tinBalance)
       } catch (error) {
-        console.log("[v0] Error fetching tinBalance:", error)
-      }
+        console.log("[v0] Error fetching plan details:", error)
+        // Fallback to individual function calls if getPlanDetails fails
+        try {
+          const invested = await contract.totalInvested(address)
+          totalInvestment = Number(ethers.formatUnits(invested, 6))
+          console.log("[v0] totalInvestment (fallback):", totalInvestment)
+        } catch (e) {
+          console.log("[v0] Error fetching totalInvestment:", e)
+        }
 
-      // Fetch claimable daily reward from smart contract
-      let dailyRewardAmount = 0
-      try {
-        const daily = await contract.getClaimableDaily(address)
-        dailyRewardAmount = Number(ethers.formatUnits(daily, 6)) // USDT has 6 decimals
-        console.log("[v0] dailyReward from contract:", dailyRewardAmount)
-      } catch (error) {
-        console.log("[v0] Error fetching daily reward:", error)
+        try {
+          const tokens = await contract.tokenRewards(address)
+          tinBalance = Number(ethers.formatEther(tokens))
+          console.log("[v0] tinBalance (fallback):", tinBalance)
+        } catch (e) {
+          console.log("[v0] Error fetching tinBalance:", e)
+        }
+
+        try {
+          const daily = await contract.getClaimableDaily(address)
+          dailyRewardAmount = Number(ethers.formatUnits(daily, 6))
+          console.log("[v0] dailyReward (fallback):", dailyRewardAmount)
+        } catch (e) {
+          console.log("[v0] Error fetching daily reward:", e)
+        }
       }
 
       // Fetch user level
