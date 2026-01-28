@@ -65,6 +65,8 @@ export function useWallet() {
       const autoConnect = async () => {
         setIsConnecting(true)
         try {
+          // Small delay to ensure MetaMask is ready
+          await new Promise(resolve => setTimeout(resolve, 500))
           const { provider, signer, address } = await connectWallet()
           setProvider(provider)
           setSigner(signer)
@@ -73,7 +75,7 @@ export function useWallet() {
           setContract(contractInstance)
           setIsReady(true)
         } catch (error) {
-          console.error("Auto-connect failed:", error)
+          console.error("[v0] Auto-connect failed:", error)
           localStorage.removeItem("walletConnected")
         } finally {
           setIsConnecting(false)

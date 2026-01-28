@@ -72,20 +72,43 @@ export const SEED_SALE_CONTRACT_ABI = [
   { inputs: [{ internalType: "address", name: "token", type: "address" }, { internalType: "address", name: "to", type: "address" }, { internalType: "uint256", name: "amount", type: "uint256" }], name: "withdrawTokens", outputs: [], stateMutability: "nonpayable", type: "function" }
 ]
 
+let isConnecting = false
+
 export async function connectWallet() {
-  if (typeof window.ethereum !== "undefined") {
-    try {
-      await window.ethereum.request({ method: "eth_requestAccounts" })
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const address = await signer.getAddress()
-      return { provider, signer, address }
-    } catch (error) {
-      console.error("Failed to connect wallet:", error)
-      throw error
-    }
-  } else {
+  if (typeof window.ethereum === "undefined") {
     throw new Error("MetaMask is not installed")
+  }
+
+  // Prevent concurrent connection attempts
+  if (isConnecting) {
+    throw new Error("Connection already in progress")
+  }
+
+  isConnecting = true
+  try {
+    console.log("[v0] Starting wallet connection...")
+    
+    // Check if already connected
+    const accounts = await window.ethereum.request({ method: "eth_accounts" })
+    console.log("[v0] Current accounts:", accounts)
+    
+    if (accounts.length === 0) {
+      // Request permission
+      console.log("[v0] Requesting account access...")
+      await window.ethereum.request({ method: "eth_requestAccounts" })
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum)
+    const signer = await provider.getSigner()
+    const address = await signer.getAddress()
+    
+    console.log("[v0] Wallet connected:", address)
+    return { provider, signer, address }
+  } catch (error) {
+    console.error("[v0] Failed to connect wallet:", error)
+    throw error
+  } finally {
+    isConnecting = false
   }
 }
 
