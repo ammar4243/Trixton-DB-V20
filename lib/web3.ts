@@ -119,3 +119,27 @@ export function getUsdtContract(signerOrProvider: ethers.Signer | ethers.Provide
 export function getAirdropContract(signerOrProvider: ethers.Signer | ethers.Provider) {
   return new ethers.Contract(AIRDROP_CONTRACT_ADDRESS, AIRDROP_CONTRACT_ABI, signerOrProvider)
 }
+
+export function getTinTokenContract(signerOrProvider: ethers.Signer | ethers.Provider) {
+  const TIN_ABI = [
+    "function balanceOf(address account) external view returns (uint256)",
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function transfer(address to, uint256 amount) external returns (bool)",
+    "function decimals() external view returns (uint8)"
+  ]
+  // Get TIN address from main contract
+  const TIN_ADDRESS = "0xc1537fea4be5ff08c4b15d5a8bb5ddb5b08fce46"
+  return new ethers.Contract(TIN_ADDRESS, TIN_ABI, signerOrProvider)
+}
+
+export async function getTinTokenAddress(signerOrProvider: ethers.Signer | ethers.Provider) {
+  try {
+    const contract = getContract(signerOrProvider)
+    const tinAddress = await contract.TIN()
+    console.log("[v0] TIN token address from contract:", tinAddress)
+    return tinAddress
+  } catch (error) {
+    console.log("[v0] Error fetching TIN address:", error)
+    return "0xc1537fea4be5ff08c4b15d5a8bb5ddb5b08fce46"
+  }
+}

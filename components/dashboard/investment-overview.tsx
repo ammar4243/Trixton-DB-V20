@@ -76,32 +76,32 @@ export function InvestmentOverview() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card rounded-xl p-4 border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={16} className="text-primary" />
-              <span className="text-sm font-medium">Total Invest</span>
+              <span className="text-sm font-medium">Invested Amount</span>
             </div>
             <p className="text-2xl font-bold text-primary neon-text">${totalInvestmentUSD.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">USDT invested</p>
+            <p className="text-sm text-muted-foreground">USDT Invested</p>
           </div>
 
           <div className="glass-card rounded-xl p-4 border border-secondary/20">
             <div className="flex items-center gap-2 mb-2">
               <Coins size={16} className="text-secondary" />
-              <span className="text-sm font-medium">Total TIN Token</span>
+              <span className="text-sm font-medium">Available TIN Locked</span>
             </div>
             <p className="text-2xl font-bold text-secondary neon-text-pink">{tinTokens.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground">@ ${tokenPrice}/TIN</p>
+            <p className="text-sm text-muted-foreground">TIN Tokens</p>
           </div>
 
           <div className="glass-card rounded-xl p-4 border border-blue-500/20">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={16} className="text-blue-500" />
-              <span className="text-sm font-medium">Referral Reward</span>
+              <span className="text-sm font-medium">Daily Reward</span>
             </div>
             <p className="text-2xl font-bold text-blue-500">${pendingReferralRewards.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">Available to claim</p>
+            <p className="text-sm text-muted-foreground">Available to Withdraw</p>
           </div>
         </div>
 
